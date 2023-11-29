@@ -17,10 +17,12 @@ const showLoader = () => {
     catInfoDiv.style.display = 'none';
 };
 
+let hasCatData = false;
+
 const hideLoader = () => {
     loader.style.display = 'none';
     breedSelect.style.display = 'block';
-    catInfoDiv.style.display = 'block';
+    catInfoDiv.style.display = hasCatData ? 'block' : 'none';
 };
 
 const showError = (message) => {
@@ -43,8 +45,12 @@ const addBreedsToSelect = (breeds) => {
 };
 
 const handleFetchError = (error) => {
-    console.error('Error fetching breeds:', error);
-    showError('Unable to fetch breeds. Please try again later.');
+    console.error('Error fetching data:', error);
+    showError('Unable to fetch data. Please try again later.');
+    loader.style.display = 'none';
+    catInfoDiv.style.display = 'none';
+    breedSelect.style.display = 'block';
+    hasCatData = false;
 };
 
 const populateBreedSelect = () => {
@@ -59,21 +65,21 @@ const displayCatInfo = (breedId) => {
     showLoader();
     fetchCatByBreed(breedId)
         .then(catData => {
-            catInfoDiv.innerHTML = `
-            <div>
-                <img src="${catData.url}" alt="${catData.breeds[0].name}">
-
+            if (catData && catData.breeds && catData.breeds.length > 0) {
+                catInfoDiv.innerHTML = `
+                <div>
+                    <img src="${catData.url}" alt="${catData.breeds[0].name}">
                     <h1><strong>${catData.breeds[0].name}</strong></h1>
                     <p>${catData.breeds[0].description}</p>
-                    <p><strong>Temperament:</strong>
-                    ${catData.breeds[0].temperament}</p>
+                    <p><strong>Temperament:</strong> ${catData.breeds[0].temperament}</p>
                 </div>
-            `;
+                `;
+                hasCatData = true;
+            } else {
+                throw new Error('No breed data available');
+            }
         })
-        .catch(error => {
-            console.error('Error fetching cat information:', error);
-            showError('Unable to fetch cat information. Please try again later.');
-        })
+        .catch(handleFetchError)
         .finally(hideLoader);
 };
 
